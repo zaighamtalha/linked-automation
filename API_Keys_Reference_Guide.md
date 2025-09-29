@@ -89,7 +89,7 @@ https://www.linkedin.com/company/123456789/ → ID: 123456789
 
 ### **What It Looks Like:**
 ```
-AIzaSyCLZkBl_BM3MV27Pt6yBSJNs88dvcUzih4
+AIzaSyEXAMPLE1234567890abcdef1234567890
 ```
 - **Length:** 39 characters
 - **Starts with:** `AIza`

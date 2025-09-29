@@ -47,7 +47,7 @@ Follow this checklist to set up your automation quickly and efficiently.
 1. [ ] Go to [Google AI Studio](https://aistudio.google.com/)
 2. [ ] Sign in with Google account
 3. [ ] **Get API Key** → **Create API Key**
-4. [ ] **Copy key:** `AIzaSyCLZkBl_BM3MV27Pt6yBSJNs88dvcUzih4`
+4. [ ] **Copy key:** `AIzaSyEXAMPLE1234567890abcdef1234567890`
 5. [ ] **Save key securely**
 
 ### **D. Email SMTP Settings (2 minutes)**
@@ -111,7 +111,7 @@ Follow this checklist to set up your automation quickly and efficiently.
 3. [ ] **Fill in all fields:**
    - **GitHub Repository:** `username/repo-name`
    - **GitHub Username:** `your-username`
-   - **Gemini API Key:** `AIzaSyCLZkBl_BM3MV27Pt6yBSJNs88dvcUzih4`
+   - **Gemini API Key:** `AIzaSyEXAMPLE1234567890abcdef1234567890`
    - **Notification Email:** `your-email@gmail.com`
    - **LinkedIn Organization ID:** `123456789`
    - **GitHub Token:** `ghp_1234567890abcdef...`

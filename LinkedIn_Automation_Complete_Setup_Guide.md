@@ -69,7 +69,7 @@ Your automation will:
 3. **Click "Get API Key"**
 4. **Click "Create API Key"**
 5. **Copy the key** (starts with `AIza`)
-   - Example: `AIzaSyCLZkBl_BM3MV27Pt6yBSJNs88dvcUzih4`
+   - Example: `AIzaSyEXAMPLE1234567890abcdef1234567890`
 
 ### **D. Email Setup (Optional but Recommended)**
 
@@ -160,7 +160,7 @@ If you prefer to host it yourself:
 ```
 GitHub Repository Name: your-username/your-repo-name
 GitHub Username: your-github-username
-Gemini API Key: AIzaSyCLZkBl_BM3MV27Pt6yBSJNs88dvcUzih4
+Gemini API Key: AIzaSyEXAMPLE1234567890abcdef1234567890
 Notification Email: your-email@gmail.com
 LinkedIn Organization ID: 123456789
 GitHub Token: ghp_1234567890abcdef1234567890abcdef12345678
