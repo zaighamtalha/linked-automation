@@ -1,0 +1,885 @@
+{
+    "nodes": [
+      {
+        "parameters": {},
+        "id": "e227c7a8-4769-4a0a-b19c-8b5efa035876",
+        "name": "Enterprise Weekly Scheduler",
+        "type": "n8n-nodes-base.cron",
+        "typeVersion": 1,
+        "position": [
+          -1552,
+          672
+        ]
+      },
+      {
+        "parameters": {
+          "fields": {
+            "values": [
+              {}
+            ]
+          },
+          "options": {}
+        },
+        "id": "5b47fc21-987d-4055-8898-b6fdaf46a12a",
+        "name": "Enterprise Configuration",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.2,
+        "position": [
+          -1328,
+          672
+        ]
+      },
+      {
+        "parameters": {
+          "url": "https://api.github.com/repos/{{ $node['enterprise-config'].json['github_username'] }}/{{ $env.GITHUB_REPO_NAME }}/commits",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "since",
+                "value": "={{ $now.minus({ days: 7 }).toISO() }}"
+              },
+              {
+                "name": "per_page",
+                "value": "100"
+              }
+            ]
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer {{ $node['enterprise-config'].json['github_token'] }}"
+              },
+              {
+                "name": "Accept",
+                "value": "application/vnd.github+json"
+              },
+              {
+                "name": "X-GitHub-Api-Version",
+                "value": "2022-11-28"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "5a053d87-a824-4c57-9f69-2ac994940c80",
+        "name": "GitHub Activity Fetcher",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.1,
+        "position": [
+          -1104,
+          432
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "V4DJapKDOcVBzfC5",
+            "name": "Header Auth account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "url": "https://api.github.com/repos/{{ $node['enterprise-config'].json['github_username'] }}/{{ $env.GITHUB_REPO_NAME }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer {{ $node['enterprise-config'].json['github_token'] }}"
+              },
+              {
+                "name": "Accept",
+                "value": "application/vnd.github+json"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "15d34d2a-5019-4f7d-9d38-005b0995800c",
+        "name": "Repository Insights",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.1,
+        "position": [
+          -1104,
+          672
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "V4DJapKDOcVBzfC5",
+            "name": "Header Auth account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "url": "https://api.github.com/repos/{{ $node['Enterprise Configuration'].json['github_username'] }}/{{ $env.GITHUB_REPO_NAME }}/languages",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer {{ $node['enterprise-config'].json['github_token'] }}"
+              },
+              {
+                "name": "Accept",
+                "value": "application/vnd.github+json"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "11a5d8bb-7e78-4706-8bf6-2f7021e16d52",
+        "name": "Language Analysis",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.1,
+        "position": [
+          -1104,
+          864
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "V4DJapKDOcVBzfC5",
+            "name": "Header Auth account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Enterprise GitHub Activity Intelligence Engine\nconst commits = $input.first().json;\nconst repoData = $input.all().find(item => item.json.full_name)?.json || {};\nconst languages = $input.all().find(item => !Array.isArray(item.json) && !item.json.full_name)?.json || {};\n\n// Advanced commit analysis\nfunction analyzeCommits(commits) {\n  const analysis = {\n    totalCommits: commits.length,\n    commitMessages: commits.map(c => c.commit.message),\n    authors: [...new Set(commits.map(c => c.commit.author.name))],\n    dates: commits.map(c => c.commit.author.date),\n    complexity: 'basic'\n  };\n  \n  // Technical skill extraction with enterprise patterns\n  const skillPatterns = {\n    ai: /\\b(ai|artificial intelligence|machine learning|ml|neural|tensorflow|pytorch|scikit|keras|transformers|llm|gpt|bert|nlp|computer vision|deep learning)\\b/gi,\n    automation: /\\b(automation|workflow|pipeline|ci\\/cd|jenkins|github actions|gitlab ci|docker|kubernetes|k8s|terraform|ansible|chef|puppet)\\b/gi,\n    cloud: /\\b(aws|azure|gcp|cloud|serverless|lambda|microservices|api gateway|load balancer|cdn)\\b/gi,\n    frontend: /\\b(react|vue|angular|javascript|typescript|html|css|sass|webpack|vite|next\\.js|nuxt)\\b/gi,\n    backend: /\\b(node|python|java|go|rust|django|flask|express|fastapi|spring|gin|actix)\\b/gi,\n    database: /\\b(sql|nosql|mongodb|postgresql|mysql|redis|elasticsearch|dynamodb|cassandra)\\b/gi,\n    devops: /\\b(devops|sre|monitoring|logging|prometheus|grafana|elk|observability|security|testing)\\b/gi,\n    architecture: /\\b(microservices|monolith|event-driven|cqrs|saga|ddd|clean architecture|hexagonal)\\b/gi\n  };\n  \n  const detectedSkills = {};\n  const allText = analysis.commitMessages.join(' ').toLowerCase();\n  \n  Object.keys(skillPatterns).forEach(skill => {\n    const matches = allText.match(skillPatterns[skill]) || [];\n    if (matches.length > 0) {\n      detectedSkills[skill] = [...new Set(matches)];\n    }\n  });\n  \n  // Complexity assessment\n  if (commits.length > 20 || Object.keys(detectedSkills).length > 4) {\n    analysis.complexity = 'advanced';\n  } else if (commits.length > 10 || Object.keys(detectedSkills).length > 2) {\n    analysis.complexity = 'intermediate';\n  }\n  \n  // Achievement recognition\n  const achievements = [];\n  const fixPattern = /\\b(fix|bug|issue|resolve|patch)\\b/gi;\n  const featurePattern = /\\b(feature|add|implement|create|build)\\b/gi;\n  const optimizePattern = /\\b(optimize|improve|enhance|refactor|performance)\\b/gi;\n  \n  if (allText.match(fixPattern)) achievements.push('Bug fixes and debugging');\n  if (allText.match(featurePattern)) achievements.push('Feature development');\n  if (allText.match(optimizePattern)) achievements.push('Code optimization');\n  \n  // Business impact calculation\n  const businessImpact = {\n    codeQuality: Math.min(100, commits.length * 2 + Object.keys(detectedSkills).length * 10),\n    innovation: Object.keys(detectedSkills).includes('ai') ? 90 : 70,\n    collaboration: analysis.authors.length > 1 ? 85 : 60,\n    productivity: Math.min(100, commits.length * 3)\n  };\n  \n  return {\n    ...analysis,\n    detectedSkills,\n    achievements,\n    businessImpact,\n    repositoryMetrics: {\n      name: repoData.name || 'Unknown',\n      description: repoData.description || '',\n      stars: repoData.stargazers_count || 0,\n      forks: repoData.forks_count || 0,\n      size: repoData.size || 0,\n      primaryLanguage: repoData.language || 'Unknown'\n    },\n    languageBreakdown: languages,\n    innovationIndex: Math.round((businessImpact.innovation + businessImpact.codeQuality) / 2)\n  };\n}\n\n// Market trend analysis\nfunction getTrendingTopics() {\n  const currentDate = new Date();\n  const trends = {\n    'Q1': ['AI Automation', 'Cloud Native', 'DevSecOps', 'Edge Computing'],\n    'Q2': ['Machine Learning Operations', 'Serverless Architecture', 'API-First Development'],\n    'Q3': ['Digital Transformation', 'Microservices', 'Data Engineering', 'Platform Engineering'],\n    'Q4': ['AI Ethics', 'Sustainable Computing', 'Zero Trust Security', 'Observability']\n  };\n  \n  const quarter = 'Q' + Math.ceil((currentDate.getMonth() + 1) / 3);\n  return trends[quarter] || trends['Q1'];\n}\n\nconst analysis = analyzeCommits(commits);\nanalysis.trendingTopics = getTrendingTopics();\nanalysis.analysisDate = new Date().toISOString();\nanalysis.hasActivity = analysis.totalCommits > 0;\n\nreturn { json: analysis };"
+        },
+        "id": "fbc439c1-c414-4432-8a23-1a548d225584",
+        "name": "Enterprise Activity Analyzer",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -880,
+          264
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 1
+            },
+            "conditions": [
+              {
+                "id": "activity-check",
+                "leftValue": "={{ $json.hasActivity }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equal"
+                }
+              },
+              {
+                "id": "complexity-check",
+                "leftValue": "={{ $json.totalCommits }}",
+                "rightValue": 3,
+                "operator": {
+                  "type": "number",
+                  "operation": "gte"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "bbc100d9-502a-4e51-837a-75c682819d3a",
+        "name": "Activity Quality Gate",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          -656,
+          264
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Enterprise Content Strategy Planner\nconst analysis = $input.first().json;\nconst config = $('enterprise-config').first().json;\n\n// Content strategy engine\nfunction planContentStrategy(analysis, userConfig) {\n  const strategy = {\n    contentType: determineContentType(analysis),\n    targetAudience: determineAudience(analysis, userConfig),\n    keyMessages: extractKeyMessages(analysis),\n    hashtagStrategy: generateHashtagStrategy(analysis, userConfig),\n    toneProfile: userConfig.content_tone || 'technical-executive',\n    urgency: calculateUrgency(analysis),\n    viralPotential: assessViralPotential(analysis)\n  };\n  \n  return strategy;\n}\n\nfunction determineContentType(analysis) {\n  if (analysis.innovationIndex > 80) return 'thought_leadership';\n  if (analysis.detectedSkills.ai) return 'technical_breakthrough';\n  if (analysis.totalCommits > 15) return 'productivity_showcase';\n  if (analysis.achievements.length > 2) return 'achievement_highlight';\n  return 'technical_update';\n}\n\nfunction determineAudience(analysis, config) {\n  const audiences = [];\n  \n  if (analysis.detectedSkills.ai || analysis.detectedSkills.automation) {\n    audiences.push('AI Engineers', 'CTOs', 'Tech Leaders');\n  }\n  if (analysis.detectedSkills.devops || analysis.detectedSkills.cloud) {\n    audiences.push('DevOps Engineers', 'Platform Engineers', 'SREs');\n  }\n  if (analysis.businessImpact.innovation > 80) {\n    audiences.push('Innovation Leaders', 'VPs of Engineering');\n  }\n  \n  return audiences.length > 0 ? audiences : ['Software Engineers', 'Developers'];\n}\n\nfunction extractKeyMessages(analysis) {\n  const messages = [];\n  \n  if (analysis.totalCommits > 20) {\n    messages.push(`Delivered ${analysis.totalCommits} commits in one week`);\n  }\n  \n  Object.keys(analysis.detectedSkills).forEach(skill => {\n    const skillMap = {\n      ai: 'Advanced AI/ML implementation',\n      automation: 'Workflow automation excellence',\n      cloud: 'Cloud-native architecture',\n      devops: 'DevOps best practices'\n    };\n    if (skillMap[skill]) messages.push(skillMap[skill]);\n  });\n  \n  if (analysis.innovationIndex > 85) {\n    messages.push('Cutting-edge innovation in software development');\n  }\n  \n  return messages;\n}\n\nfunction generateHashtagStrategy(analysis, config) {\n  const hashtags = ['#TechLeadership', '#SoftwareEngineering', '#Innovation'];\n  \n  // Industry-specific hashtags\n  const industries = (config.user_industries || '').split(',');\n  industries.forEach(industry => {\n    const industryMap = {\n      fintech: '#FinTech',\n      ai: '#ArtificialIntelligence',\n      automation: '#Automation',\n      devops: '#DevOps'\n    };\n    if (industryMap[industry.trim()]) {\n      hashtags.push(industryMap[industry.trim()]);\n    }\n  });\n  \n  // Skill-based hashtags\n  Object.keys(analysis.detectedSkills).forEach(skill => {\n    const skillHashtags = {\n      ai: ['#MachineLearning', '#AI'],\n      automation: ['#WorkflowAutomation', '#CI_CD'],\n      cloud: ['#CloudNative', '#AWS'],\n      frontend: ['#Frontend', '#React'],\n      backend: ['#Backend', '#API'],\n      devops: ['#DevOps', '#Infrastructure']\n    };\n    if (skillHashtags[skill]) {\n      hashtags.push(...skillHashtags[skill]);\n    }\n  });\n  \n  return [...new Set(hashtags)].slice(0, 10); // Limit to 10 hashtags\n}\n\nfunction calculateUrgency(analysis) {\n  let urgency = 'medium';\n  \n  if (analysis.innovationIndex > 90 || analysis.totalCommits > 25) {\n    urgency = 'high';\n  } else if (analysis.totalCommits < 5) {\n    urgency = 'low';\n  }\n  \n  return urgency;\n}\n\nfunction assessViralPotential(analysis) {\n  let score = 50; // Base score\n  \n  // AI/ML content tends to be more engaging\n  if (analysis.detectedSkills.ai) score += 20;\n  \n  // High productivity is impressive\n  if (analysis.totalCommits > 20) score += 15;\n  \n  // Innovation drives engagement\n  if (analysis.innovationIndex > 85) score += 15;\n  \n  // Multiple skills show expertise\n  score += Object.keys(analysis.detectedSkills).length * 3;\n  \n  return Math.min(100, score);\n}\n\nconst strategy = planContentStrategy(analysis, config);\n\nreturn {\n  json: {\n    ...analysis,\n    contentStrategy: strategy,\n    readyForPreview: true,\n    previewScheduled: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days from now\n  }\n};"
+        },
+        "id": "11d9fee5-a0fc-49d1-a8b9-8d69fd3ab018",
+        "name": "Enterprise Content Strategist",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -432,
+          144
+        ]
+      },
+      {
+        "parameters": {
+          "fromEmail": "noreply@{{ $env.COMPANY_DOMAIN }}",
+          "toEmail": "={{ $node['Enterprise Configuration'].json['notification_email'] }}",
+          "subject": "🚀 LinkedIn Content Preview - {{ $json.contentStrategy.contentType | title }}",
+          "options": {}
+        },
+        "id": "6d15dd90-b39a-49ec-ab93-9d635ecd055d",
+        "name": "Send Preview Notification",
+        "type": "n8n-nodes-base.emailSend",
+        "typeVersion": 2.1,
+        "position": [
+          -208,
+          144
+        ],
+        "webhookId": "4a733a88-89f7-4051-831d-104bbfa499d7",
+        "credentials": {
+          "smtp": {
+            "id": "LooMeB7Ethn0zDBx",
+            "name": "SMTP account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "amount": 3,
+          "unit": "days"
+        },
+        "id": "6393fcc9-7ce0-43ea-8f6e-5d0235f0d41b",
+        "name": "3-Day Approval Period",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          16,
+          144
+        ],
+        "webhookId": "bb6e8e14-ce98-4a9c-bdf4-618fb933cf93"
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "id": "8b7f8678-654c-4722-9262-1fd7872b8fcf",
+        "name": "AI Model Configuration",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.2,
+        "position": [
+          240,
+          144
+        ]
+      },
+      {
+        "parameters": {
+          "url": "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "key",
+                "value": "={{ $node['Enterprise Configuration'].json['gemini_api_key'] }}"
+              }
+            ]
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "contents",
+                "value": "{{ JSON.stringify([{\"parts\":[{\"text\":\"You are an enterprise-level LinkedIn content strategist and ghostwriter specializing in technical leadership content. Create engaging, professional LinkedIn posts that showcase technical expertise while maintaining executive-level professionalism.\\n\\nCONTENT GUIDELINES:\\n1. HOOK: First 2 lines must grab attention with compelling statistics or bold statements\\n2. PROBLEM FRAMING: Present challenges as complex, industry-wide issues\\n3. HERO POSITIONING: Position the author as the architect/solution leader\\n4. TECHNICAL AUTHORITY: Use precise technical terminology and industry buzzwords\\n5. TANGIBLE OUTCOMES: Include specific metrics and measurable results\\n6. EXECUTIVE PRESENCE: Balance technical depth with business impact\\n7. CALL TO ACTION: End with engagement-driving questions or connection invites\\n\\nTONE REQUIREMENTS:\\n- Professional yet approachable\\n- Confident without being arrogant\\n- Technical but accessible to non-technical executives\\n- Results-oriented and impact-focused\\n- Thought-leadership quality\\n\\nFORMAT:\\n- 1300-1900 characters (optimal LinkedIn length)\\n- Clear paragraph breaks for readability\\n- Strategic use of emojis (maximum 3)\\n- Professional hashtags at the end\\n\\nCreate a LinkedIn post based on this technical activity analysis:\\n\\n**ANALYSIS DATA:**\\n- Total Commits: {{ $json.totalCommits }}\\n- Innovation Index: {{ $json.innovationIndex }}/100\\n- Technical Skills: {{ Object.keys($json.detectedSkills).join(', ') }}\\n- Key Achievements: {{ $json.achievements.join(', ') }}\\n- Business Impact Scores: Code Quality {{ $json.businessImpact.codeQuality }}/100, Innovation {{ $json.businessImpact.innovation }}/100, Productivity {{ $json.businessImpact.productivity }}/100\\n- Repository: {{ $json.repositoryMetrics.name }} ({{ $json.repositoryMetrics.primaryLanguage }})\\n- Content Strategy: {{ $json.contentStrategy.contentType }} targeting {{ $json.contentStrategy.targetAudience.join(', ') }}\\n\\n**CONTEXT:**\\n- Industry Focus: {{ $node['Enterprise Configuration'].json['user_industries'] }}\\n- Content Tone: {{ $node['Enterprise Configuration'].json['content_tone'] }}\\n- Trending Topics: {{ $json.trendingTopics.join(', ') }}\\n\\n**HASHTAG STRATEGY:**\\nUse these hashtags: {{ $json.contentStrategy.hashtagStrategy.slice(0, 8).join(' ') }}\\n\\nCreate content that positions the author as a technical leader driving innovation in their organization. Focus on the business impact and technical excellence demonstrated through their recent work.\"}]}]) }}"
+              },
+              {
+                "name": "generationConfig",
+                "value": "{{ JSON.stringify({\"temperature\": 0.7, \"maxOutputTokens\": 800, \"topP\": 0.8}) }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "9aba5323-d306-42d2-900a-88cc8d0fc717",
+        "name": "Primary AI Generator (Gemini Flash)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.1,
+        "position": [
+          464,
+          -144
+        ]
+      },
+      {
+        "parameters": {
+          "url": "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "key",
+                "value": "={{ $node['Enterprise Configuration'].json['gemini_api_key'] }}"
+              }
+            ]
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "contents",
+                "value": "{{ JSON.stringify([{\"parts\":[{\"text\":\"Create a professional LinkedIn post based on this technical analysis:\\n\\n\" + JSON.stringify($input.first().json, null, 2) + \"\\n\\nGuidelines:\\n- Executive-level technical content\\n- Hook with compelling opening\\n- Showcase technical leadership\\n- Include business impact\\n- Professional tone with industry authority\\n- Use hashtags: \" + $input.first().json.contentStrategy.hashtagStrategy.slice(0, 8).join(' ') + \"\\n- 1300-1900 characters optimal\\n\\nCreate content that positions the author as an innovative technical leader.\"}]}]) }}"
+              },
+              {
+                "name": "generationConfig",
+                "value": "{{ JSON.stringify({\"temperature\": 0.6, \"maxOutputTokens\": 600, \"topP\": 0.8}) }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "a85d5542-bc94-473b-a676-61d394ed014b",
+        "name": "Backup AI Generator (Gemini Pro)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.1,
+        "position": [
+          464,
+          120
+        ]
+      },
+      {
+        "parameters": {
+          "url": "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "key",
+                "value": "={{ $node['Enterprise Configuration'].json['gemini_api_key'] }}"
+              }
+            ]
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "contents",
+                "value": "{{ JSON.stringify([{\"parts\":[{\"text\":\"You are a LinkedIn content expert specializing in technical leadership posts. Create a professional post based on this data:\\n\\n\" + JSON.stringify($input.first().json) + \"\\n\\nRequirements:\\n- Professional executive tone\\n- Technical leadership focus\\n- Business impact emphasis\\n- 1400-1800 characters\\n- Include hashtags: \" + $input.first().json.contentStrategy.hashtagStrategy.slice(0,8).join(' ') + \"\\n\\nPosition the author as an innovative technical leader driving organizational success.\"}]}]) }}"
+              },
+              {
+                "name": "generationConfig",
+                "value": "{{ JSON.stringify({\"temperature\": 0.8, \"maxOutputTokens\": 600, \"topP\": 0.9}) }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "da187c73-7901-48c9-b31a-3bd3081fc5d8",
+        "name": "Specialist AI Generator (Gemini Flash)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.1,
+        "position": [
+          464,
+          312
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Enterprise Content Quality Assurance & Selection Engine\nconst inputs = $input.all();\n\n// Extract generated content from different AI models\nconst gptContent = inputs.find(item => item.json.choices)?.json.choices[0]?.message?.content || '';\nconst claudeContent = inputs.find(item => item.json.content && item.json.content[0])?.json.content[0]?.text || '';\nconst geminiContent = inputs.find(item => item.json.candidates)?.json.candidates[0]?.content?.parts[0]?.text || '';\n\nconst analysisData = $('Enterprise Content Strategist').first().json;\n\n// Content evaluation criteria\nfunction evaluateContent(content, criteria) {\n  let score = 0;\n  \n  // Length optimization (LinkedIn sweet spot: 1300-1900 characters)\n  const length = content.length;\n  if (length >= 1300 && length <= 1900) score += 20;\n  else if (length >= 1000 && length <= 2200) score += 15;\n  else score += 5;\n  \n  // Hook strength (compelling opening)\n  const openingLines = content.split('\\n')[0];\n  if (openingLines.includes('🚀') || openingLines.includes('💡') || openingLines.includes('⚡')) score += 15;\n  if (/\\d+%|\\d+ [a-zA-Z]+|\\$\\d+/.test(openingLines)) score += 15; // Numbers/metrics in opening\n  \n  // Technical authority indicators\n  const techTerms = ['AI', 'automation', 'architecture', 'pipeline', 'deployment', 'optimization', 'scalability'];\n  const techScore = techTerms.filter(term => content.toLowerCase().includes(term.toLowerCase())).length;\n  score += Math.min(20, techScore * 3);\n  \n  // Business impact language\n  const businessTerms = ['impact', 'results', 'performance', 'efficiency', 'ROI', 'transformation', 'innovation'];\n  const businessScore = businessTerms.filter(term => content.toLowerCase().includes(term.toLowerCase())).length;\n  score += Math.min(15, businessScore * 2);\n  \n  // Professional formatting\n  const paragraphs = content.split('\\n\\n').length;\n  if (paragraphs >= 3 && paragraphs <= 6) score += 10;\n  \n  // Hashtag presence and quality\n  const hashtagCount = (content.match(/#\\w+/g) || []).length;\n  if (hashtagCount >= 5 && hashtagCount <= 10) score += 10;\n  \n  // Call-to-action presence\n  const ctaIndicators = ['What', 'How', 'thoughts', 'experience', 'connect', 'discuss', 'share'];\n  if (ctaIndicators.some(cta => content.toLowerCase().includes(cta.toLowerCase()))) score += 10;\n  \n  return Math.min(100, score);\n}\n\n// Evaluate all generated content\nconst contentOptions = [\n  { source: 'GPT-4', content: gptContent, model: 'primary' },\n  { source: 'Claude', content: claudeContent, model: 'backup' },\n  { source: 'Gemini', content: geminiContent, model: 'specialist' }\n].filter(option => option.content && option.content.length > 100);\n\n// Score each option\nconst scoredContent = contentOptions.map(option => ({\n  ...option,\n  qualityScore: evaluateContent(option.content, analysisData.contentStrategy),\n  characterCount: option.content.length,\n  hashtagCount: (option.content.match(/#\\w+/g) || []).length,\n  hasMetrics: /\\d+%|\\d+x|\\$\\d+|\\d+ [a-zA-Z]+/.test(option.content)\n}));\n\n// Select best content or create hybrid\nlet selectedContent;\nif (scoredContent.length === 0) {\n  // Fallback content generation\n  selectedContent = {\n    source: 'Fallback',\n    content: generateFallbackContent(analysisData),\n    qualityScore: 75,\n    model: 'fallback'\n  };\n} else {\n  // Sort by quality score and select the best\n  scoredContent.sort((a, b) => b.qualityScore - a.qualityScore);\n  selectedContent = scoredContent[0];\n  \n  // If top scores are close, create hybrid content\n  if (scoredContent.length > 1 && scoredContent[0].qualityScore - scoredContent[1].qualityScore < 10) {\n    selectedContent = createHybridContent(scoredContent[0], scoredContent[1], analysisData);\n  }\n}\n\n// Generate fallback content if AI models fail\nfunction generateFallbackContent(analysis) {\n  const skills = Object.keys(analysis.detectedSkills).join(', ');\n  const commits = analysis.totalCommits;\n  const innovation = analysis.innovationIndex;\n  \n  return `🚀 Just wrapped up an incredible week of development!\n\nDelivered ${commits} commits focused on ${skills} - pushing the boundaries of what's possible in software engineering.\n\nKey highlights:\n• Innovation index: ${innovation}/100\n• ${analysis.achievements.join('\\n• ')}\n• Driving technical excellence across our platform\n\nThe intersection of automation and AI continues to reshape how we build scalable solutions. Every commit is a step toward more intelligent, efficient systems.\n\nWhat challenges are you solving with automation in your stack?\n\n${analysis.contentStrategy.hashtagStrategy.slice(0, 8).join(' ')}`;\n}\n\n// Create hybrid content combining best elements\nfunction createHybridContent(content1, content2, analysis) {\n  // Use the better hook from content1, body from content2, or vice versa\n  const lines1 = content1.content.split('\\n');\n  const lines2 = content2.content.split('\\n');\n  \n  // Take the stronger opening\n  const hook = content1.qualityScore > content2.qualityScore ? lines1[0] : lines2[0];\n  \n  // Combine body content, removing duplicates\n  const body1 = lines1.slice(1).join('\\n');\n  const body2 = lines2.slice(1).join('\\n');\n  \n  const hybrid = `${hook}\\n\\n${body1.length > body2.length ? body1 : body2}`;\n  \n  return {\n    source: 'Hybrid AI',\n    content: hybrid,\n    qualityScore: Math.max(content1.qualityScore, content2.qualityScore) + 5,\n    model: 'hybrid',\n    hybridOf: [content1.source, content2.source]\n  };\n}\n\n// Content optimization and formatting\nfunction optimizeContent(content, analysis) {\n  let optimized = content;\n  \n  // Ensure proper spacing\n  optimized = optimized.replace(/\\n{3,}/g, '\\n\\n');\n  \n  // Ensure hashtags are at the end\n  const hashtags = analysis.contentStrategy.hashtagStrategy.slice(0, 8).join(' ');\n  if (!optimized.includes('#')) {\n    optimized += `\\n\\n${hashtags}`;\n  }\n  \n  // Add professional emoji if missing\n  if (!optimized.match(/[🚀💡⚡🎯📈🔥✨]/)) {\n    optimized = '🚀 ' + optimized;\n  }\n  \n  return optimized;\n}\n\n// Final content preparation\nconst finalContent = optimizeContent(selectedContent.content, analysisData);\n\n// Performance tracking data\nconst performanceData = {\n  contentGenerated: new Date().toISOString(),\n  modelUsed: selectedContent.source,\n  qualityScore: selectedContent.qualityScore,\n  characterCount: finalContent.length,\n  expectedEngagement: analysisData.contentStrategy.viralPotential,\n  targetAudience: analysisData.contentStrategy.targetAudience,\n  contentType: analysisData.contentStrategy.contentType,\n  hashtagCount: (finalContent.match(/#\\w+/g) || []).length\n};\n\nreturn {\n  json: {\n    ...analysisData,\n    selectedContent: {\n      text: finalContent,\n      source: selectedContent.source,\n      model: selectedContent.model,\n      qualityScore: selectedContent.qualityScore\n    },\n    allGeneratedOptions: scoredContent,\n    performanceData,\n    readyToPost: true,\n    scheduledPostTime: new Date().toISOString()\n  }\n};"
+        },
+        "id": "46ab48f3-6ac1-45c9-b6c0-76fdedbed26c",
+        "name": "Content QA & Selector",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          688,
+          -192
+        ]
+      },
+      {
+        "parameters": {
+          "url": "https://api.linkedin.com/v2/ugcPosts",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer {{ $node['Enterprise Configuration'].json['linkedin_access_token'] }}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "X-Restli-Protocol-Version",
+                "value": "2.0.0"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "author",
+                "value": "{{ $env.LINKEDIN_PERSON_URN }}"
+              },
+              {
+                "name": "lifecycleState",
+                "value": "PUBLISHED"
+              },
+              {
+                "name": "specificContent",
+                "value": "{{ JSON.stringify({ 'com.linkedin.ugc.ShareContent': { 'shareCommentary': { 'text': $json.selectedContent.text }, 'shareMediaCategory': 'NONE' } }) }}"
+              },
+              {
+                "name": "visibility",
+                "value": "{{ JSON.stringify({ 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' }) }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "39c28193-dbaf-4e05-8118-6b1641487f0b",
+        "name": "LinkedIn Publisher",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.1,
+        "position": [
+          912,
+          -192
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "V4DJapKDOcVBzfC5",
+            "name": "Header Auth account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Enterprise Analytics & Performance Tracking\nconst publishResponse = $input.first().json;\nconst contentData = $('Content QA & Selector').first().json;\nconst config = $('enterprise-config').first().json;\n\n// Extract LinkedIn post ID from response\nconst postId = publishResponse.id || publishResponse.urn || 'unknown';\nconst postUrl = publishResponse.id ? `https://www.linkedin.com/feed/update/${postId}/` : 'Not available';\n\n// Performance metrics calculation\nconst performanceMetrics = {\n  postId: postId,\n  postUrl: postUrl,\n  publishedAt: new Date().toISOString(),\n  contentLength: contentData.selectedContent.text.length,\n  hashtagCount: (contentData.selectedContent.text.match(/#\\w+/g) || []).length,\n  qualityScore: contentData.selectedContent.qualityScore,\n  aiModel: contentData.selectedContent.source,\n  expectedEngagement: contentData.contentStrategy.viralPotential,\n  targetReach: calculateExpectedReach(contentData),\n  businessImpact: contentData.businessImpact,\n  technicalSkills: Object.keys(contentData.detectedSkills),\n  contentStrategy: contentData.contentStrategy.contentType\n};\n\n// Calculate expected reach based on content quality and user profile\nfunction calculateExpectedReach(data) {\n  let baseReach = 1000; // Base reach for professional content\n  \n  // Quality multiplier\n  baseReach *= (data.selectedContent.qualityScore / 100) + 0.5;\n  \n  // Viral potential multiplier\n  baseReach *= (data.contentStrategy.viralPotential / 100) + 0.3;\n  \n  // Technical content tends to have more engaged but smaller audience\n  if (data.contentStrategy.contentType === 'technical_deep_dive') {\n    baseReach *= 0.8;\n  } else if (data.contentStrategy.contentType === 'thought_leadership') {\n    baseReach *= 1.5;\n  }\n  \n  return Math.round(baseReach);\n}\n\n// Business impact calculation\nconst businessImpact = {\n  brandAwareness: {\n    estimatedImpressions: performanceMetrics.targetReach * 2.5,\n    professionalReach: Math.round(performanceMetrics.targetReach * 0.85),\n    industryInfluence: contentData.innovationIndex > 80 ? 'High' : 'Medium'\n  },\n  leadGeneration: {\n    expectedConnections: Math.round(performanceMetrics.targetReach * 0.02),\n    qualifiedProspects: Math.round(performanceMetrics.targetReach * 0.005),\n    estimatedValue: (performanceMetrics.targetReach * 0.005 * 2500).toLocaleString()\n  },\n  thoughtLeadership: {\n    expertiseDisplay: contentData.detectedSkills,\n    innovationShowcase: contentData.innovationIndex,\n    industryPositioning: contentData.contentStrategy.targetAudience\n  }\n};\n\n// Success notification data preparation\nconst successData = {\n  status: 'SUCCESS',\n  publishedAt: performanceMetrics.publishedAt,\n  postUrl: postUrl,\n  metrics: performanceMetrics,\n  businessImpact: businessImpact,\n  contentPreview: contentData.selectedContent.text.substring(0, 200) + '...',\n  analyticsAvailable: true,\n  nextAnalysisDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // Next week\n};\n\n// Store performance data for future analysis\nconst analyticsData = {\n  timestamp: new Date().toISOString(),\n  organizationId: config.organization_id,\n  userId: config.github_username,\n  postData: {\n    id: postId,\n    content: contentData.selectedContent.text,\n    contentType: contentData.contentStrategy.contentType,\n    aiModel: contentData.selectedContent.source,\n    qualityScore: contentData.selectedContent.qualityScore\n  },\n  githubActivity: {\n    commits: contentData.totalCommits,\n    skills: contentData.detectedSkills,\n    innovationIndex: contentData.innovationIndex,\n    repositoryMetrics: contentData.repositoryMetrics\n  },\n  predictedMetrics: performanceMetrics,\n  businessProjections: businessImpact\n};\n\nreturn {\n  json: {\n    ...successData,\n    analyticsData: analyticsData,\n    webhookData: {\n      event: 'linkedin_post_published',\n      timestamp: new Date().toISOString(),\n      data: successData\n    }\n  }\n};"
+        },
+        "id": "9f55dad2-89ea-417e-8113-1d56cc705b40",
+        "name": "Analytics Processor",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1136,
+          -240
+        ]
+      },
+      {
+        "parameters": {
+          "fromEmail": "success@{{ $env.COMPANY_DOMAIN }}",
+          "toEmail": "={{ $node['Enterprise Configuration'].json['notification_email'] }}",
+          "subject": "✅ LinkedIn Post Published Successfully - {{ $json.metrics.contentStrategy | title }}",
+          "options": {}
+        },
+        "id": "cd7cf100-1b21-468b-a0fc-7f3f5fe3c518",
+        "name": "Success Notification",
+        "type": "n8n-nodes-base.emailSend",
+        "typeVersion": 2.1,
+        "position": [
+          1360,
+          -336
+        ],
+        "webhookId": "2d9b4b2b-b7b4-40e4-a3c7-9fe2c62027f9",
+        "credentials": {
+          "smtp": {
+            "id": "LooMeB7Ethn0zDBx",
+            "name": "SMTP account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "url": "={{ $env.WEBHOOK_URL || 'https://your-analytics-endpoint.com/webhook' }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "X-API-Key",
+                "value": "={{ $env.ANALYTICS_API_KEY }}"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "analyticsData",
+                "value": "{{ JSON.stringify($json.analyticsData) }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "a725eef6-a376-4e04-943b-52e399b93051",
+        "name": "Analytics Webhook",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.1,
+        "position": [
+          1360,
+          -144
+        ]
+      },
+      {
+        "parameters": {
+          "fromEmail": "alerts@{{ $env.COMPANY_DOMAIN }}",
+          "toEmail": "={{ $node['Enterprise Configuration'].json['notification_email'] }}",
+          "subject": "⚠️ LinkedIn Automation Error - {{ $json.error.name }}",
+          "options": {}
+        },
+        "id": "e7564ea7-c523-4ee4-8071-22d6b9480869",
+        "name": "Error Notification",
+        "type": "n8n-nodes-base.emailSend",
+        "typeVersion": 2.1,
+        "position": [
+          1136,
+          264
+        ],
+        "webhookId": "88e562a8-e944-4809-9aa5-fbbe12594e9e",
+        "credentials": {
+          "smtp": {
+            "id": "LooMeB7Ethn0zDBx",
+            "name": "SMTP account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Low Activity Workflow Handler\nconst analysis = $input.first().json;\nconst config = $('enterprise-config').first().json;\n\n// Generate minimal activity report\nconst lowActivityReport = {\n  status: 'LOW_ACTIVITY',\n  period: 'Last 7 days',\n  commitCount: analysis.totalCommits || 0,\n  reason: analysis.totalCommits === 0 ? 'No commits found' : 'Insufficient activity for content generation',\n  suggestions: [\n    'Increase development activity',\n    'Consider manual content creation',\n    'Review repository settings',\n    'Check if commits are being tracked correctly'\n  ],\n  nextCheck: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),\n  alternativeActions: [\n    'Share industry insights',\n    'Post about learning goals',\n    'Highlight team achievements',\n    'Discuss technical challenges'\n  ]\n};\n\nreturn { json: lowActivityReport };"
+        },
+        "id": "28c1cfe2-5523-4d0c-9e42-b787773e58cb",
+        "name": "Low Activity Handler",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -432,
+          336
+        ]
+      },
+      {
+        "parameters": {
+          "fromEmail": "insights@{{ $env.COMPANY_DOMAIN }}",
+          "toEmail": "={{ $node['Enterprise Configuration'].json['notification_email'] }}",
+          "subject": "📊 Weekly Activity Report - Low Activity Detected",
+          "options": {}
+        },
+        "id": "bc087694-fe13-4892-98c8-f6d1bda628bb",
+        "name": "Low Activity Notification",
+        "type": "n8n-nodes-base.emailSend",
+        "typeVersion": 2.1,
+        "position": [
+          -208,
+          336
+        ],
+        "webhookId": "46315298-e833-4812-ba24-a68ae40b8122",
+        "credentials": {
+          "smtp": {
+            "id": "LooMeB7Ethn0zDBx",
+            "name": "SMTP account"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Enterprise Weekly Scheduler": {
+        "main": [
+          [
+            {
+              "node": "Enterprise Configuration",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Enterprise Configuration": {
+        "main": [
+          [
+            {
+              "node": "GitHub Activity Fetcher",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Repository Insights",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Language Analysis",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "GitHub Activity Fetcher": {
+        "main": [
+          [
+            {
+              "node": "Enterprise Activity Analyzer",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Error Notification",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Repository Insights": {
+        "main": [
+          [
+            {
+              "node": "Enterprise Activity Analyzer",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Error Notification",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Language Analysis": {
+        "main": [
+          [
+            {
+              "node": "Enterprise Activity Analyzer",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Error Notification",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Enterprise Activity Analyzer": {
+        "main": [
+          [
+            {
+              "node": "Activity Quality Gate",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Activity Quality Gate": {
+        "main": [
+          [
+            {
+              "node": "Enterprise Content Strategist",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Low Activity Handler",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Enterprise Content Strategist": {
+        "main": [
+          [
+            {
+              "node": "Send Preview Notification",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Preview Notification": {
+        "main": [
+          [
+            {
+              "node": "3-Day Approval Period",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "3-Day Approval Period": {
+        "main": [
+          [
+            {
+              "node": "AI Model Configuration",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "AI Model Configuration": {
+        "main": [
+          [
+            {
+              "node": "Primary AI Generator (Gemini Flash)",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Backup AI Generator (Gemini Pro)",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Specialist AI Generator (Gemini Flash)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Primary AI Generator (Gemini Flash)": {
+        "main": [
+          [
+            {
+              "node": "Content QA & Selector",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Error Notification",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Backup AI Generator (Gemini Pro)": {
+        "main": [
+          [
+            {
+              "node": "Content QA & Selector",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Error Notification",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Specialist AI Generator (Gemini Flash)": {
+        "main": [
+          [
+            {
+              "node": "Content QA & Selector",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Error Notification",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Content QA & Selector": {
+        "main": [
+          [
+            {
+              "node": "LinkedIn Publisher",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "LinkedIn Publisher": {
+        "main": [
+          [
+            {
+              "node": "Analytics Processor",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Error Notification",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Analytics Processor": {
+        "main": [
+          [
+            {
+              "node": "Success Notification",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Analytics Webhook",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Low Activity Handler": {
+        "main": [
+          [
+            {
+              "node": "Low Activity Notification",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "pinData": {},
+    "meta": {
+      "templateCredsSetupCompleted": true,
+      "instanceId": "9d51138bda06379577cccedb034dff845dc939c5b167aec882211f6a7b8be34e"
+    }
+  }
